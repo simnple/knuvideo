@@ -23,12 +23,17 @@ class Lms():
             raise ValueError("Failed to get date: invalid content id or internet connection error")
 
     def __get_size(self):
-        response = requests.head(self.media_uri, headers=self.headers)
+        size = 0
 
-        if response.status_code != 200:
-            raise ValueError("Failed to get size: invalid content id or internet connection error")
+        for media in self.media_uri:
+            response = requests.head(media, headers=self.headers)
 
-        return int(response.headers["Content-Length"])
+            if response.status_code != 200:
+                raise ValueError("Failed to get size: invalid content id or internet connection error")
+
+            size += int(response.headers["Content-Length"])
+
+        return size
 
     @property
     def info(self):
@@ -43,11 +48,11 @@ class Lms():
 
     @property
     def media_uri(self):
-        return self.__data.find("media_uri").get_text().replace("[MEDIA_FILE]", self.main_media)
+        return [self.__data.find("media_uri").get_text().replace("[MEDIA_FILE]", media) for media in self.main_media]
 
     @property
     def main_media(self):
-        return self.__data.find("main_media").get_text()
+        return [media.get_text() for media in self.__data.find_all("main_media")]
 
     @property
     def title(self):
